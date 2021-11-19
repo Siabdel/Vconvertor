@@ -1,0 +1,10 @@
+#! /usr/bin/python26
+echo off
+# Python executable to use. 
+export PYTHON="/usr/bin/python26\python.exe"
+export APPLI="./startConvertor.py"
+# Run APPLI on Python interpreter
+rm -f *.pyc
+# *** CHEMIN ACCES
+$PYTHON  $APPLI  
+##python -m trace --count -C D:\data\SusieRebot\launch.py

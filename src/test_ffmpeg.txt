@@ -1,0 +1,27 @@
+ffmpeg -i Lesmonolithes.avi -acodec libmp3lame  -ab 128kb -vcodec mpeg4 -b 1200kb -mbd 2 -flags +4mv+trell -cmp 2 -subcmp 2 -s 320x180  toto.avi^C
+
+#  Convertir un fichier DVR en avi
+
+ffmpeg -benchmark -threads 2 -y -i "000.DVR" –async 1 -deinterlace -s qvga -vcodec libxvid -qscale 4 -vtag DX50 -acodec libmp3lame -ac 2 -ab 128000 -f avi "output.avi" 
+
+FFmpeg version 0.6-rpmfusion, Copyright (c) 2000
+[ren39@localhost 2010-08-02.20.08.40-NT1-362]$ mencoder 000.DVR -o 000.avi -of avi  -oac mp3lame -ovc x264 
+MEncoder SVN-r31628-4.4.4 (C) 2000-2010 MPlayer Team
+success: format: 0  data: 0x0 - 0x325db000
+Seek failed
+libavformat file format detected.
+LAVF_header: av_open_input_stream() failed
+RAWDV file format detected.
+VIDEO:  [DVSD]  720x576  24bpp  25.000 fps    0.0 kbps ( 0.0 kbyte/s)
+[V] filefmt:22  fourcc:0x44535644  size:720x576  fps:25.000  ftime:=0.0400
+==========================================================================
+Opening audio decoder: [libdv] Raw DV Audio Decoder
+Unknown/missing audio format -> no sound
+ADecoder init failed :(
+Opening audio decoder: [ffmpeg] FFmpeg/libavcodec audio decoders
+Cannot find codec 'dvaudio' in libavcodec...
+ADecoder init failed :(
+ADecoder init failed :(
+Cannot find codec for audio format 0x56444152.
+
+ffmpeg -i source_video.avi input -acodec aac -ab 128kb -vcodec mpeg4 -b 1200kb -mbd 2 -flags +4mv+trell -aic 2 -cmp 2 -subcmp 2 -s 320x180 -title X final_video.mp4

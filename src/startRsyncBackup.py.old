@@ -1,0 +1,1028 @@
+# -*- coding:utf-8 -*-
+# module general
+from time import (strftime, mktime)
+import time, re
+from datetime import datetime
+import codecs
+from codecs import open
+import threading
+import tkFont
+import Pmw
+
+import tkMessageBox
+from Tkinter import Tk, tkinter, PhotoImage, StringVar, Radiobutton, TOP, YES, LEFT, RIGHT, Y
+from Tkinter import Checkbutton, Radiobutton, Scrollbar, Toplevel, Button, Listbox, Label, Entry, Canvas
+from tkFileDialog import askdirectory, askopenfilename, askopenfilename
+import fileinput
+import os, sys, stat, string
+#import _winreg
+from ScrolledText import Scrollbar, ScrolledText
+
+from xml.dom import minidom
+import fileinput
+import decimal
+from  traceback  import print_exc
+from logging import debug
+from string import strip
+import glob
+from string import atof, atoi
+import tempfile
+import shutil
+import logging
+import bdb
+# module local 
+from commun_helpers import subprocessLaunchWithoutConsole, createElemntXml
+from commun_helpers import deleteConfigUserFromFileXml
+# fabric
+from fabric.contrib.project import getcwd, env, local, cd
+from fabric.api import run, cd,  prefix, put, get, roles
+
+
+mswindows = (sys.platform == "win32")
+logger = logging.getLogger(__name__)
+
+env.hosts = ["192.168.0.15",]
+env.login =	  "aziz"
+
+
+@roles('webservers')
+def list_dir_remote(dir=None):
+	"""docstring for list_dir"""
+	
+	dir = dir or env.cwd
+	string = run("for i in %s*; do echo $i; done" % dir)
+	files = string.replace("\r","").split("\n")
+	return file
+
+class ClssSynchroRep :
+	"""
+	Synchronise les fichiers et dossiers
+	"""
+	
+	def __init__(self, parent) :
+		self.parent = parent
+		self.tab_entry_connexion = {}
+		self.var_environnement  = {}
+		self.tab_entry 	= {}
+		self.list_folders_home = []
+		self.list_folders_tosave = []
+		
+		self.src_filenames = []
+		self.button_cmd = None
+		self.var_environnement_default  = {
+				'ID' : '',
+				'LOCAL_DIR' : '/home/abdel/',
+				'REMOTE_HOST' 	: 	'',
+				'REMOTE_IP'	: 	'',
+				'REMOTE_LOGIN'	: '',
+				'REMOTE_PASSWORD'	: '',
+				'REMOTE_PORT'	: '',
+				'REMOTE_LOGIN'	: '2222',
+				'REMOTE_DIR'	: '',
+				'TRACE'		: 	os.path.dirname(os.path.abspath(__file__)) + "/out",
+					
+		}
+		
+		#---------------------------------------------
+		# 1- initialisation de la classe mere
+		#---------------------------------------------
+		
+		#---------------------------------------------
+		# 2- charge l'environnment 
+		#---------------------------------------------
+		self.chargeConfiguration()
+		
+		#---------------------------------------------
+		# 3- lancement de l'interfae
+		#---------------------------------------------
+		self.interfaceStart()
+		
+	def charge_list_src(self):	
+		"""
+		"""
+		self.list_folders_home = []
+		local_dir_src = self.var_environnement_default['LOCAL_DIR']
+		self.list_src.delete(0, 'end')
+		
+		
+		# listes des rep a partir de home
+		dirlist = []
+		
+		for compteur, dirname in enumerate(sorted(os.listdir(local_dir_src))):
+			if os.path.isdir(os.path.join(local_dir_src, dirname)) :
+				dirlist.append(dirname)
+				self.list_src.insert(compteur , dirname)
+				self.list_folders_home.insert(compteur, os.path.join(local_dir_src, dirname))
+			
+		self.list_folders_home.sort()
+	
+	def interfaceStart(self) :
+		#
+		self.options = {}
+		initialdir  = os.getcwd() + "/config/param.xml"
+		self.options['initialdir'] = initialdir
+		self.options['title'] = 'Localisation du fichier param.xml'
+		self.options['defaultextension'] = '*.xml' 
+		
+		
+		pframe = Tkinter.Frame(self.parent, bd =1,  bg ='#3F3', width= 150, height=100);
+		pframe.pack(fill = 'both', expand = 1)
+		
+		# multi frames
+		self.notebook1 = Pmw.NoteBook(pframe, 
+						createcommand = None,
+						lowercommand = 	None,
+						raisecommand = 	None,
+						hull_width 	= 600,
+						hull_height = 300,
+						)	
+		
+		# Pack the notebook last so that the buttonbox does not disappear
+		# when the window is made smaller.
+		self.notebook1.pack(fill = 'both', expand = 1, padx = 5, pady = 5 )
+		
+		self.page1 = self.notebook1.add('Muti Lignes conversion')
+		self.page3 = self.notebook1.add('Destination Sauvegarde') 
+		 
+		self.page1.focus()
+		# le groupe
+		self.group_options = Pmw.Group(self.parent, tag_text='Atlass Convertor')
+		self.group_options.pack(side='top',  expand = 1, padx = 2, pady = 2)
+		
+		# Commandes 
+		self.img_convert 	= PhotoImage(file = "images/convert.gif" ) 
+		self.img_play 		= PhotoImage(file = "images/play.gif" , height=50)
+		self.img_param 		= PhotoImage(file = "images/param.gif" ) 
+		self.img_ajouter	= PhotoImage(file = "images/ajouter.gif" , height=50)
+		self.img_reload		= PhotoImage(file = "images/reload.gif" , height=50)
+		self.img_quitter	= PhotoImage(file = "images/quitter_2.gif" , height=50)
+		
+		
+		self.tipinfo1 = Pmw.Balloon(self.group_options.interior())
+		
+		#--------------------------
+		# PAGE 1
+		#--------------------------
+		self.sframe = Tkinter.Frame(self.page1, bd =1,  bg ='#FFFFFF', width=400, height=540);
+		self.sframe.pack(fill = 'both', expand = YES)
+		
+		group_repertoires = Pmw.Group(self.sframe, tag_text='Choix des répertoires ')
+		group_repertoires.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+		
+			
+		
+		# ouvrir sources et destination
+		#options['multiple'] = 1
+		
+		self.sourceIn= Tkinter.Entry(group_repertoires.interior(), width=40)
+		self.sourceIn.grid(row=1, column=1)
+		
+		dsource = Button(group_repertoires.interior(), text='Répertoire Sources', bg='#455', fg='#fff', width=20)
+		# lambda x, y : x + y
+		s_options = {'title': 'Ajouter un Dossier source', 'initialdir':self.var_environnement_default['LOCAL_DIR'],
+				   'entry':self.sourceIn}
+		
+		dsource.bind('<Button-1>', lambda event:self.ouvrirRepertoire(s_options, event, self.sourceIn))
+		dsource.grid(row=1, column=2)
+		#
+		self.destinIn= Tkinter.Entry(group_repertoires.interior(), width=40)
+		d_options = {'title': 'Ajouter un Dossier destination', 'initialdir':self.var_environnement_default['REMOTE_DIR'],
+				   'entry':self.destinIn}
+		self.destinIn.grid(row=2, column=1)
+		ddest = Button(group_repertoires.interior(), text='Répertoire Destination', bg='#455', fg='#fff', width=20)
+		# lambda x, y : x + y
+		rdir_default = self.var_environnement_default['REMOTE_DIR']
+		ddest.bind('<Button-1>', lambda event:self.ouvrirRepertoire(d_options, event, self.destinIn))
+		ddest.grid(row=2, column=2)
+			
+		#--------------------------------------
+		# Selection des reperoire a sauvegarder
+		#-------------------------------------
+		local_dir_src = self.var_environnement_default['LOCAL_DIR']		
+		self.group_src = Pmw.Group(self.sframe, tag_text='Sauvegarde / Synchro [%s]' % local_dir_src)
+		self.group_src.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+	
+		self.list_src 	= Listbox(self.group_src.interior())
+		ascenseur_src 	= Scrollbar(self.group_src.interior())
+		ascenseur_src.config(command = self.list_src.yview)
+		self.list_src.grid(row=1, column=1)
+		ascenseur_src.grid(row=1, column=2)
+		
+		
+		self.list_src.config(yscrollcommand = ascenseur_src.set)
+		self.list_src.config(bg="#fff", fg="#222", height = 10, width = 30)
+		self.list_src.bind('<Double-1>', lambda event:self.selectListSrc(event))
+		
+		# charge list des reperoire source a partir du path indiquer dans la config
+		self.charge_list_src()
+		
+		self.list_maselection = Listbox(self.group_src.interior())
+		self.list_maselection.config(bg="#fff", fg="#33f",  height = 10, width = 30)
+		
+		self.list_maselection.bind('<Double-1>', lambda event:self.unSelectListSrc(event))
+		
+		self.list_maselection.grid(row=1, column=3, padx=12)
+		
+		# Button lancement sauvegarde
+		bt_run = Button(self.group_src.interior(), text='Ok',  width=35, height=30,
+						command = self.runApplication, image=self.img_convert )
+		bt_run.grid(row=1, column=4)
+		
+		#-------------------------
+		#- Info Suivi 
+		#-------------------------		
+		group_info = Pmw.Group(pframe, tag_text='Suivi')
+		group_info.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+		
+		my_font = tkFont.Font(family="Monaco", size=12) # use a fixed width font so columns align
+		self.suivis 	= Listbox(group_info.interior(), font=my_font)
+		ascenseur 	= Scrollbar(group_info.interior())
+		ascenseur.config(command = self.suivis.yview)
+		# attach listbox to scrollbar
+		ascenseur.pack(side=RIGHT, fill=Y)
+				
+		self.suivis.config(yscrollcommand = ascenseur.set)
+		self.suivis.config(background='black', foreground='white')
+		self.suivis.config(height = 5, width = 55)
+		self.suivis.pack()
+		
+		self.buttonBoxAdmin = Pmw.ButtonBox(pframe)
+		bt1 = self.buttonBoxAdmin.add('Ajouter',cursor='hand2',width=30, height=20,
+						command = self.ouvrirRepertoire, image=self.img_ajouter)
+		bt4 = self.buttonBoxAdmin.add('Paramètrage',  	cursor='hand2',width=30, height=20,
+					    command = self.parametrages, image=self.img_param)
+		self.buttonBoxAdmin.pack(side=RIGHT, padx=3, pady=3)
+		self.tipinfo1.bind(bt1, 'Lancer Convertor')
+		self.tipinfo1.bind(bt4, 'Paramètrage du lanceur')
+
+		
+		self.local_synchronisation()
+	
+	#--------------------------------------
+	# Syncronisation repertoire local
+	#-------------------------------------
+
+	def local_synchronisation(self):
+		"""
+		synchronisation des repertoire local 
+		"""
+		#-----------------------
+		# PAGE3
+		#-----------------------
+		
+		self.synframe = Tkinter.Frame(self.page3, bd =1,  bg ='#FFFFFF');
+		self.synframe.pack(fill = 'both')
+		
+		self.group_p3 = Pmw.Group(self.synframe, tag_text='Sources ...')
+		self.group_p3.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+		
+		
+		self.ll_source = Label(self.group_p3.interior(), text='',  width=60, bg='yellow')
+		self.ll_source.grid(row=1, column=2, pady = 2)
+		
+		self.ll_dest = Label(self.group_p3.interior(), text='',  width=60, bg='yellow')
+		self.ll_dest.grid(row=2, column=2, pady = 2)
+		
+		bt_source = Button(self.group_p3.interior(), width=20, text='Sources')
+		bt_source.bind("<Button-1>", lambda event:self.rep_sources(self.ll_source))
+		bt_source.grid(row=1, column=1)
+		
+		
+		bt_dest = Button(self.group_p3.interior(), width=20, text='Destination')
+		bt_dest.bind("<Button-1>", lambda event:self.rep_sources(self.ll_dest))
+		bt_dest.grid(row=2, column=1)
+		
+		my_font = tkFont.Font(family="Monaco", size=12) # use a fixed width font so columns align
+		buttonBoxSync = Pmw.ButtonBox(self.synframe)
+		buttonBoxSync.add('Synchroniser',width=10, bg='#333', fg='#fff', height=5, command = self.synchro_rep, font=my_font )
+		buttonBoxSync.pack()
+		
+	#--------------------------------------
+	# Page 3 Restauration 
+	#-------------------------------------
+	def rep_sources(self, dest):
+		"""
+		"""
+		master = Toplevel()
+		
+		rs_frame = Tkinter.Frame(master, bd =1,  bg ='#FFFFFF', width=400, height=540);
+		rs_frame.pack(fill = 'both', expand = YES)
+		
+		self.group_p3 = Pmw.Group(rs_frame, tag_text='Sources ...')
+		self.group_p3.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+			
+		# list deroulate info	
+		self.list_rep_src = Listbox(self.group_p3.interior())
+		ascenseur_remote_src = Scrollbar(self.group_p3.interior())
+		ascenseur_remote_src.config(command = self.list_rep_src.yview)
+		
+		self.list_rep_src.config(yscrollcommand = ascenseur_remote_src.set)
+		self.list_rep_src.config(bg="#333", fg="#fff", height = 15, width = 55)
+		self.list_rep_src.bind('<Double-1>', lambda event:self.selectSource(event, dest))
+		#
+		self.list_rep_src.grid(row=1, column=1)
+		self.list_rep_src.delete(0, 'end')
+		
+		# listes des rep a partir de home
+		dirlist = []
+		
+		for compteur, dirname in enumerate(sorted(os.listdir(self.var_environnement_default['LOCAL_DIR']))):
+			if os.path.isdir(os.path.join(self.var_environnement_default['LOCAL_DIR'], dirname)) :
+				dirlist.append(dirname)
+				self.list_rep_src.insert(compteur , dirname)
+		
+		# button de command
+		buttonBoxSrc = Pmw.ButtonBox(self.group_p3.interior())
+		
+		buttonBoxSrc.add('Ok', cursor='hand2',width=12, height=3,  command = master.destroy)
+		buttonBoxSrc.grid(row=3, column=1)
+		
+		
+	def synchro_rep(self):
+		"""
+		"""
+		sources = os.path.join(self.var_environnement_default['LOCAL_DIR'], self.ll_source.cget("text"))
+		destination = os.path.join(self.var_environnement_default['LOCAL_DIR'],self.ll_dest.cget("text"))
+		
+		command = "rsync --progress -avz --log-file=rsync.log {0}/* {1}".format(sources, destination)
+		
+		logger.debug('Rsync with command: ' + ' '.join(command))
+		returncode, data, erreurs = subprocessLaunchWithoutConsole(command)
+		#
+		if erreurs :
+			for ligne in erreurs:
+				self.suivis.insert('end' , ligne.decode('utf-8').strip())
+		
+		
+		if data :
+			for ligne in data:
+				self.suivis.insert('end' , ligne.decode('utf-8').strip())
+		
+	
+	#--------------------------------------
+	# Page 3 Restauration 
+	#-------------------------------------
+	def restauration(self):
+		"""
+		"""
+		
+		self.sframe = Tkinter.Frame(self.page3, bd =1,  bg ='#FFFFFF', width=400, height=540);
+		self.sframe.pack(fill = 'both', expand = YES)
+		
+		self.group_p3 = Pmw.Group(self.sframe, tag_text='Sources ...')
+		self.group_p3.pack(side=TOP,  expand = YES, padx = 2, pady = 2)
+			
+		# list deroulate info	
+		self.list_remote_src 	= Listbox(self.group_p3.interior())
+		ascenseur_remote_src 	= Scrollbar(self.group_p3.interior())
+		ascenseur_remote_src.config(command = self.list_remote_src.yview)
+		
+		self.list_remote_src.config(yscrollcommand = ascenseur_remote_src.set)
+		self.list_remote_src.config(bg="#333", fg="#fff", height = 15, width = 55)
+		self.list_remote_src.bind('<Double-1>', lambda event:self.selectListSrc(event))
+		#
+		self.list_remote_src.grid(row=1, column=1)
+		
+		# listes des rep a partir de home
+		dirlist = []
+		repertoire_src = self.var_environnement_default['REMOTE_DIR']
+		env.hosts = ["192.168.0.15",]
+		env.login =	  "aziz"
+		"""
+		with cd(repertoire_src):
+			for compteur, dirname in enumerate(list_dir(repertoire_src)):
+				print dirname
+		"""
+		
+			
+	def ouvrirRepertoire(self, options, event, dest):
+		"""
+		Returns an opened Directory .
+		options = {}
+		options['initialdir'] = os.path.dirname(os.path.abspath(__file__))
+		options['initialdir'] = self.var_environnement_default['LOCAL_DIR']
+		options['title'] = 'Choisissez un repertoire'
+		options['multiple'] = 1
+		"""
+		#print "les options event=%s... options = %s" % (event, options)
+		#dest = options['entry']
+		kwargs = options.copy()
+		kwargs.pop('entry')
+		
+		nomFic = askdirectory(**kwargs)
+		#print "dossier entree = %s" % nomFic
+		if nomFic  :
+			dest.delete(0, "end")
+			dest.insert(0, nomFic)
+
+
+		return True
+
+		
+	def update(self, event, cle):
+		#
+		username = str(os.getenv("USERNAME"))
+		
+		rubrique_jumeaux_1 = ['HOMEAPP']
+		 	
+		success=True
+		try:
+		    x_saisi = str(self.tab_entry[cle].get())
+		    
+		    		     
+		except ValueError:
+			success=False
+		
+		if success:
+			
+			if cle == 'HOMEAPP' :
+				home_0 = self.tab_entry['HOMEAPP'].get()
+				# on supprime les slashs en fin chaine
+				x_saisi = x_saisi.rstrip(chr(92))
+				x_saisi = x_saisi.rstrip('/')
+				
+
+	#---------------------------
+	#- lance application  Convertor 
+	#---------------------------
+	def runApplication(self):
+		"""
+		lancement de l'application de Synchronise les fichiers et dossiers
+		"""
+		#for elem in self.list_folders_tosave:
+		fichiers_src = ' '.join(self.list_folders_tosave)
+		self.var_environnement_default['RUN_TEST'] = 'n'
+		self.var_environnement_default['FICHIERS_SRC'] = fichiers_src
+		
+		command = " sshpass -p $(cat FILE) rsync --progress --log-file=remote_rsync.log -e 'ssh ' -av%(RUN_TEST)s %(FICHIERS_SRC)s %(REMOTE_LOGIN)s@%(REMOTE_IP)s:%(REMOTE_DIR)s" %\
+					(self.var_environnement_default)
+
+		logger.debug('Rsync with command: ' + ' '.join(command))
+		returncode, data, erreurs = subprocessLaunchWithoutConsole(command)
+		#
+		if erreurs :
+			for ligne in erreurs:
+				self.suivis.insert('end' , ligne.decode('utf-8').strip())
+		
+		
+		if data :
+			for ligne in data:
+				self.suivis.insert('end' , ligne.decode('utf-8').strip())
+		
+	
+
+		return True
+		
+	#-------------------
+	#*** Parametrage
+	#-------------------
+	
+	def parametrages(self) :
+		#------------------------------
+		#
+		self.root_params = Toplevel()
+		self.root_params.option_add('*background', "#CCC")
+		self.root_params.option_add('*foreground', "#33F")
+		
+		self.notebook2 = Pmw.NoteBook(self.root_params, 
+						createcommand = None,
+						lowercommand = 	None,
+						raisecommand = 	None,
+						hull_width 	= 450,
+						hull_height 	= 340,
+						)	
+		
+		# Pack the notebook last so that the buttonbox does not disappear
+		# when the window is made smaller.
+		self.notebook2.pack(fill = 'both', expand = 1, padx = 5, pady = 5 )
+		
+		self.page_param1 = self.notebook2.add('Paramètres')
+		self.page_param2 = self.notebook2.add('test Connexion')
+		 
+		self.page_param1.focus()
+		
+		# ajout dune Frame
+		self.pframe1 = Tkinter.Frame(self.page_param1, bd =1,  bg ='#FFFFFF', width=400, height=540);
+		self.pframe1.pack(fill = 'both', expand = 1)
+		
+		self.pframe2 = Tkinter.Frame(self.page_param2, bd =1,  bg ='#FFFFFF', width=400, height=540);
+		self.pframe2.pack(fill = 'both', expand = 1)
+		
+		
+		#--------------------------------------
+		#parametrages Variables environnement
+		#---------------------------------------
+		
+		self.group_param1 = Pmw.Group(self.pframe1, tag_text=r'Paramètrage Convertor')
+		self.group_param1.pack(fill = 'both', expand = 0, padx = 6, pady = 6)
+		self.group_param2 = Pmw.Group(self.pframe2, tag_text='Connexion')
+		self.group_param2.pack(fill = 'both', expand = 0, padx = 6, pady = 6)
+		
+		
+		# ---------------------------------------------
+		# charger le tableau des variables environnement
+		# ---------------------------------------------
+		
+		for ind, cle in   enumerate(self.var_environnement_default.keys()) :
+			#
+			Label(self.group_param1.interior(), text= cle).grid(row=ind, column=0)
+			self.tab_entry[cle]= Entry(self.group_param1.interior(), width=60, bg='white')
+			#self.tab_entry[cle].config(bg="#FFFFCC")
+			#self.tab_entry[cle].config(state = Tkinter.DISABLED)
+			
+			# si n'est pas dans le tableau on le rajoute
+			if self.var_environnement_default.has_key(cle) :
+				self.tab_entry[cle].insert(0, self.var_environnement_default[cle])
+			
+			# username 
+			if cle == 'ID' :
+				self.tab_entry[cle].delete(0, "end")
+				self.tab_entry[cle].insert(0, self.var_environnement_default[cle])
+				#self.tab_entry[cle].config(state = "readonly")
+				#
+				self.tab_entry['ID'].bind('<KeyPress>', lambda event : self.update(event, 'ID'))
+
+			
+			self.tab_entry[cle].grid(row=ind , column=1)
+			#print type(self.tab_entry[cle])
+			ind = ind +1
+			## activation debugage
+
+		#-----------------------------
+		# Les different choix
+		#-----------------------------
+		libelles = ["Oui", "Non"]
+		valNomages = ["O", "N"]
+		
+		self.optionsTest = StringVar()
+		self.optionsTest.set(valNomages[1])
+		
+		group_choix = Pmw.Group(self.root_params, tag_text='Execution en test')
+		group_choix.pack(fill = 'both', expand = 0, padx = 6, pady = 6)
+		
+		n = 0
+		choix_nomage = []
+		for n in range(len(libelles)):
+			bt_test = Radiobutton(group_choix.interior(), text = libelles[n],
+							   width=12,
+							   variable = self.optionsTest,
+							   value = valNomages[n],
+							   command = self.monchoix)
+			bt_test.grid(row=1, column=n+1)
+		
+		# ---------------------------------------------
+		# charger le tableau des variables environnement
+		# ---------------------------------------------
+
+		self.canvas_bicolor_r = Canvas(self.group_param2.interior(), width=15, height=15, cursor='hand2')
+		self.canvas_bicolor_r.create_oval(1, 1, 15, 15, outline="white", fill='#f00', width=1)
+		self.canvas_bicolor_r.grid(row=0, column= 0)
+		
+		self.canvas_bicolor_v = Canvas(self.group_param2.interior(), width=15, height=15, cursor='hand2')
+		self.canvas_bicolor_v.create_oval(1, 1, 15, 15, outline="white", fill='#000', width=1)
+		self.canvas_bicolor_v.grid(row=0, column= 1, padx=22)
+
+		#buttonBox = Pmw.ButtonBox(self.group_param3.interior())
+		buttonBox = Pmw.ButtonBox(self.root_params)
+		buttonBox.add('Annuler', width=12, 	command=self.root_params.destroy, 		cursor='hand2')
+		buttonBox.add('Enregistrer', width=12, command=self.ecrire_param, 			cursor='hand2')
+		 
+		buttonBox.pack()			
+	
+	def save_default_config(self):
+		
+		fichierData = os.getcwd() + "/config/config.xml"
+		maintenant = datetime.now()
+		date_complet = str(maintenant.strftime("%d-%m-%Y %H:%M:%S"))
+		t_timestamp =  long(time.time())
+		t_id = "SC_" + str(t_timestamp)
+		
+		# ecrire l'entete
+		if not os.path.isfile(fichierData) :
+			with open(fichierData, 'w', 'utf-8') as fdnew :
+				enteteXML = """<?xml version="1.0" encoding="ISO-8859-1"?><ROOT></ROOT>"""
+				fdnew.write(enteteXML)
+		
+		xmldoc = minidom.parse(fichierData)
+		root = xmldoc.getElementsByTagName("ROOT")
+		
+		#if root.firstChild != root.lastChild :
+		# Ajout des parametres du scenario
+		# creer nouveau param 
+		new_scenario    = createElemntXml(xmldoc, 'PARAM')
+		scenario_id     = xmldoc.createAttribute('ID')
+		scenario_id.nodeValue = str(t_id)
+		new_scenario.setAttributeNode(scenario_id)
+		
+		scenario_created = xmldoc.createAttribute('CREATED')
+		scenario_created.nodeValue = str(date_complet)
+		new_scenario.setAttributeNode(scenario_created)
+		
+		#on ajoute option transaction
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_HOST', 	"192.168.0.15"))
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_IP', 	"192.168.0.15"))
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_PORT', 	"222"))
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_LOGIN', 	"abdel"))
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_PASSWORD', 	'Grutil001'))
+		new_scenario.appendChild(createElemntXml(xmldoc, 'REMOTE_DIR',
+												 '/media/68f01296-3d04-4ab9-9c6a-2ed0acf0ebc1/NAS-PARTAGE/'))
+		
+		# on rattache a root
+		root[0].appendChild(new_scenario)
+		# ------------------------
+		# save contenu en fichier
+		# ------------------------
+		contenueXml = xmldoc.toxml()
+		# save contenu en fichier
+		with open(fichierData, 'w', 'utf-8') as fd:
+			fd.write(contenueXml)
+
+	
+	def ecrire_param(self):
+		
+		self.dialog3 = Pmw.MessageDialog(None, title= 'Confirmation',
+			message_text = 'Souhaiter-vous Enregistrer cette config ?',
+			buttonboxpos = 'e',
+			iconpos = 'n',
+			icon_bitmap = 'warning',
+			buttons = ('Ok', 'Annuler'),
+			defaultbutton = 'Close');
+		
+		self.dialog3.withdraw()
+		# Create some buttons to launch the dialogs.
+		result = self.dialog3.activate()
+		if (result != 'Ok') :
+			return False
+		
+		fichierData = os.getcwd() + "/config/config.xml"
+		maintenant = datetime.now()
+		date_complet = str(maintenant.strftime("%d-%m-%Y %H:%M:%S"))
+		t_timestamp =  long(time.time())
+		t_id = "SC_" + str(t_timestamp)
+		
+		
+		xmldoc = minidom.parse(fichierData)
+		root = xmldoc.getElementsByTagName("ROOT")
+		
+		#----------------------------------------------------------------------------
+		# 1- test si ID existe ==> on la supprime et on remplce par la new
+		#---------------------------------------------------------------------------
+		# 
+		if self.searchConfigFromFileXml(root, self.var_environnement_default['ID']) :
+		   # suppression element pour le remplacer apres
+		   elem = self.searchConfigFromFileXml(root, self.var_environnement_default['ID'])
+		   root[0].removeChild(elem)
+		   
+		# creer nouveau param 
+		new_scenario    = createElemntXml(xmldoc, 'PARAM')
+		scenario_id     = xmldoc.createAttribute('ID')
+		scenario_id.nodeValue = str(t_id)
+		new_scenario.setAttributeNode(scenario_id)
+		
+		scenario_created = xmldoc.createAttribute('CREATED')
+		scenario_created.nodeValue = str(date_complet)
+		new_scenario.setAttributeNode(scenario_created)
+		
+		# Ajout des parametres du scenario
+		for key, val in self.var_environnement_default.items():
+			if key == 'ID':
+				att = xmldoc.createAttribute(key)
+				att.nodeValue = val
+				new_scenario.setAttributeNode(att)
+			#self.tab_entry[cle].insert(0, self.var_environnement_default[cle])
+			new_noeux	= createElemntXml(xmldoc,  key, self.tab_entry[key].get())
+			new_scenario.appendChild(new_noeux)
+		
+		# on rattache a root
+		root[0].appendChild(new_scenario)
+		# ------------------------
+		# save contenu en fichier
+		# ------------------------
+		contenueXml = xmldoc.toxml()
+		# save contenu en fichier
+		with open(fichierData, 'w', 'utf-8') as fd:
+			fd.write(contenueXml)
+		# On recharge la config a nouveau
+		self.chargeConfiguration()
+		# on recharge la liste des reperoires a sauvegarder
+		self.charge_list_src()
+		# on clos la fenetre de parametrage
+		self.root_params.destroy()
+
+	#---------------------------------------
+	# suppression Transaction From File DataXml
+	#---------------------------------------	
+	def searchConfigFromFileXml(self, root, search) :
+		# on charge le fichier data xml en xmldoc
+		 
+		top = root[0]
+		les_configs = top.getElementsByTagName('PARAM')
+		
+		for config_courant in les_configs :
+			#
+			if config_courant.attributes["ID"].value == search :
+				# element trouver
+				#print "search trouver ... %s " % (config_courant.attributes["ID"].value )
+				return config_courant
+		return False
+	
+	
+	def chargeConfiguration(self) :
+		"""
+		charge la config en cours a partir du fichier 'config.xml'
+		"""
+		list_parametres = {}
+		#lecture du fichier config
+		fichierData = os.getcwd() + "/config/config.xml"
+		if not os.path.isfile(fichierData) :
+			self.save_default_config()
+		
+		xmldoc = minidom.parse(fichierData)
+		root = xmldoc.getElementsByTagName("ROOT")
+		
+		# recherche de campagne_id
+		top = root[0]		
+		config_courant = top.getElementsByTagName('PARAM')[0]
+		
+		
+		for key, value in  self.var_environnement_default.items():
+			#print key, config_courant.getElementsByTagName(key)[0].firstChild.data
+			# add
+			
+			if key == 'ID':
+				self.var_environnement_default[key] = config_courant.attributes["ID"].value
+				
+			else :
+				try :
+					self.var_environnement_default[key] = config_courant.getElementsByTagName(key)[0].firstChild.data
+				
+				except Exception:
+					pass
+			
+			#suivant 
+			#cap = config_courant.nextSibling
+	
+		#print list_Campagne_xml
+		return self.var_environnement_default
+	
+	def apropos(self) :
+		##
+		msg = """
+		start Convertor  Version 0.99
+		version library OCI Oracle 10g
+		Powered by bdelaziz SADQUAOUI  Lyon
+		Created by Abdelaziz Sadquaoui (asadquaoui@atlass.fr)
+		Support : http://www.support.atlass.fr
+		Copyright Abdelaziz Sadquaoui © 2012 - 2013
+		"""
+		messages = Pmw.MessageDialog(None, title = 'A propos', message_text = msg);
+		messages.show();
+	
+	#-----------------------------
+	# update l'ecran suivi
+	#-----------------------------	
+	def refreshSuivi(self) :
+		#lecture du fichier trace
+		self.suivis.delete(0, 'end')
+		if(os.path.isfile("trace.log")) :
+			fs = open("trace.log", "r")
+			lignes_traces = fs.readlines()
+			fs.close()
+			ind = 0
+			for ligne in lignes_traces :
+				ind +=1
+				ligne = ligne.strip()
+				ligne = ligne.strip('\t')
+				self.suivis.insert(ind , ligne)
+		return True
+
+	#-----------------------------
+	# mettre a blanc fichier trace
+	#-----------------------------	
+	def resetFichierLog(self):
+		
+		self.dialog4 = Pmw.MessageDialog(None, title= 'Confirmation',
+			message_text = 'Souhaiter-vous mettre a  blanc le fichier trace ?',
+			buttonboxpos = 'e',
+			iconpos = 'n',
+			icon_bitmap = 'warning',
+			buttons = ('Ok',  'Fermer'),
+			defaultbutton = 'Fermer');
+		
+		self.dialog4.withdraw()
+		# Create some buttons to launch the dialogs.
+		result = self.dialog4.activate()
+		if (result != 'Ok') :
+			return False
+		
+		if(os.path.isfile("trace.log")) :
+			fs = open("trace.log", "w")
+			self.suivis.delete(0, 'end')
+			self.suivis.insert(1 , '------------ traces erreurs appli --------------')
+			fs.close()
+		return True
+			
+
+	##########################
+	# sauvegarde de la config
+	###########################
+	def saveParametres(self) :
+		#
+		maintenant = datetime.now()
+		date_complet = str(maintenant.strftime("%d-%m-%Y %H:%M:%S"))
+		t_timestamp =  long(time.time())
+		t_id = "PM_" + str(t_timestamp)
+		
+		self.dialog3 = Pmw.MessageDialog(None, title= 'Confirmation',
+			message_text = 'Souhaiter-vous Enregistrer cette config ?',
+			buttonboxpos = 'e',
+			iconpos = 'n',
+			icon_bitmap = 'warning',
+			buttons = ('Ok', 'Annuler', 'Close'),
+			defaultbutton = 'Close');
+		
+		self.dialog3.withdraw()
+		# Create some buttons to launch the dialogs.
+		result = self.dialog3.activate()
+		if (result != 'Ok') :
+			return False
+		
+		#----------------------------------------------------------------------------
+		# 1- test si config user existe ==> on la supprime et on remplce par la new
+		#---------------------------------------------------------------------------
+		if searchConfigUserFromFileXml(self.username) :
+			#Suppression 
+			deleteConfigUserFromFileXml(self.username)
+		
+		#----------------------------------------------------------------------------
+		# 2- creer l'entete si le fchier n'existe pas sinon on recharge fichierData
+		#---------------------------------------------------------------------------		
+		fichierData = os.getcwd() + "/config/param.xml"
+		if not os.path.isfile(fichierData) :
+			#--------------------------------------------------------------------
+			# si le fichier param n'existe pas je le creer avec une entete xml 
+			#-----------------------------------------------------------------
+			xfout  = open(fichierData, 'w', 'utf-8')
+			enteteXML = """<?xml version="1.0" encoding="UTF-8"?><ROOT></ROOT>"""
+			xfout.write(enteteXML)
+			#on clos
+			xfout.close()
+			
+		xmldoc = minidom.parse(fichierData)
+		root = xmldoc.getElementsByTagName("ROOT")
+		#----------------------------------------------------------------------------
+		# 3- creer les balises config username 
+		#---------------------------------------------------------------------------	
+		#**********************************************************
+		new_username	= createElemntXml(xmldoc, 'PARAM')
+		username_id = xmldoc.createAttribute('ID')
+		username_id.nodeValue = str(t_id)
+		new_username.setAttributeNode(username_id)
+		
+		username_created = xmldoc.createAttribute('CREATED')
+		username_created.nodeValue = str(date_complet)
+		new_username.setAttributeNode(username_created)
+
+		top_elem = xmldoc.documentElement
+		ind = 0		 
+		## ajout d'une ligne xml
+		#if not( self.tab_entry.has_key(cle)) :
+		cles = self.tab_entry.keys()
+		ligne = ""
+
+		self.vars_xml = ['TRACE','DIRSRC', 'DIRDEST']
+	
+		
+		for elem in self.var_environnement_default.keys() :
+			## ajout d'une sequence a la racine
+			ind = ind + 1
+			valeur_input = self.tab_entry[elem].get()
+			#Replace les slash en fin de chaine
+			valeur_input = valeur_input.rstrip('/')
+			valeur_input = valeur_input.rstrip('\\')
+			
+			#self.tab_entry['HOME0'].delete(0,"end")
+			#self.tab_entry['HOME0'].insert(0, home_0)
+			
+			# remplacer les \ par "/"
+			valeur_input = valeur_input.replace('\\', '/')
+			ligne = createElemntXml(xmldoc, elem, valeur_input)
+			# Ajout de la ligne a la racine
+			new_username.appendChild(ligne)
+			
+		#-----------------------------------------------------------------
+		# 4-ajout new user sur le noeud users et enregistrement du contenu
+		#-----------------------------------------------------------------
+		root[0].appendChild(new_username)
+		contenueXml = xmldoc.toxml()
+		# save contenu en fichier
+		afout  = open(fichierData, 'w', 'utf-8')
+		afout.write(contenueXml)
+		## fermeture des flux fichiers
+		afout.close()
+		#recharge les variables
+		self.chargeFichierXmlParam()
+		#-------------------------------------
+		## 5-fermeture de la fentre paramettrage
+		#-------------------------------------
+		self.root_params.destroy()
+		return True
+
+	def selectSource(self, event, dest=None):
+		"""
+		"""
+		widget = event.widget
+		maselection = widget.curselection()
+		value = widget.get(maselection[0])
+		# Afficher la selection dans la destination Label 
+		if dest :
+			source = os.path.join(self.var_environnement_default['LOCAL_DIR'], value)
+			dest.config(text = source)
+		
+		return value
+	
+	
+
+	def selectListSrc(self, event):
+		"""
+		"""
+		widget = event.widget
+		maselection = widget.curselection()
+		
+		if len(maselection) > 0 :
+			value = widget.get(maselection[0])
+			
+			try :
+				self.list_folders_tosave.index(value)
+				
+			except :
+				self.list_maselection.insert('end', os.path.basename(value))
+				self.list_folders_tosave.insert(maselection[0], value)
+				
+		return True
+	
+	def unSelectListSrc(self, event):
+		"""
+		"""
+		widget = event.widget
+		maselection = widget.curselection()
+		
+		if len(maselection) > 0 :
+			value = widget.get(maselection[0])
+			self.list_maselection.delete(maselection[0])
+			self.list_folders_tosave.pop(maselection[0])
+			
+		return True
+		
+	def monchoix(self):
+		#
+		print "cest mon choix !!! %s " % self.optionsTest.get()
+		return True
+	
+
+#########################
+## Main programme 
+#########################
+if __name__ == '__main__':
+
+	font='Fixed'                  # all text (Label, Button, Listbox....  
+	bg='grey86'                   # all backgrounds (Frame, Button etc)  
+	tbg='white'                   # Text backgrounds (Entry, Listbox,Text)
+	fg='black'                    # All foreground text 
+	sbg='navy'                    # selected background
+	sfg='white'                   # selected foreground 
+	abg='grey77'                  # active background
+	afg='black'                   # active foreground
+	#BACKGROUND(silver)  =  "#C0C0C0" # Default background
+	BACKGROUND  =  "#dfdfdf" # Default background
+	#BACKGROUND  =  "#b6b6b6" # Default background
+	ACTIVE_FG   =  "#664400"      # Standard active foreground color
+	ACTIVE_BG   =  "#ffdd77"      # Standard active background color
+	TROUGH      =  "#997744"      # Standard trough color
+	BLEUAPP     = '#D0E3FF'
+	
+	# all widgets
+	root = Tkinter.Tk();
+	root.configure(width= 10, height=10)
+	#root.iconbitmap("images/setup.ico")
+	
+	"""
+	root.option_add('*activeBackground', abg)
+	root.option_add('*activeForeground', afg)
+	root.option_add('*selectBackground', sbg)
+	root.option_add('*selectForeground', sfg)
+	#root.option_add('*font', font) 
+	"""
+	
+	root.option_add('*background', "#fff" )
+	root.option_add('*foreground', "#22f")
+	
+	tr = ClssSynchroRep(root)
+	
+	Pmw.initialise(root)
+	root.config(relief=Tkinter.RAISED, bd=3)
+	root.title("Synchro Save 0.99 www.atlass.fr")
+	## la bouclen d'attente evenements
+	
+	
+	root.mainloop()

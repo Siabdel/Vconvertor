@@ -1,0 +1,3 @@
+sudo dpkg --remove --force-remove-reinstreq urd
+sudo dpkg --purge --force-remove-reinstreq urd
+

@@ -1,0 +1,56 @@
+# Ce fichier viminfo a été généré par Vim 8.1.
+# Vous pouvez l'éditer, mais soyez prudent.
+
+# Viminfo version
+|1,4
+
+# 'encoding' dans lequel ce fichier a été écrit
+*encoding=utf-8
+
+
+# hlsearch on (H) or off (h):
+~h
+# Historique ligne de commande (chronologie décroissante) :
+:q
+|2,0,1607880428,,"q"
+:x
+|2,0,1607880420,,"x"
+:w
+|2,0,1607880418,,"w"
+:66
+|2,0,1607880402,,"66"
+
+# Historique chaîne de recherche (chronologie décroissante) :
+
+# Historique expression (chronologie décroissante) :
+
+# Historique ligne de saisie (chronologie décroissante) :
+
+# Historique Ligne de débogage (chronologie décroissante) :
+
+# Registres :
+
+# Marques dans le fichier :
+'0  65  34  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,48,65,34,1607880428,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+'1  65  34  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,49,65,34,1607880420,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+
+# Liste de sauts (le plus récent en premier) :
+-'  65  34  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,39,65,34,1607880428,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+-'  65  34  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,39,65,34,1607880420,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+-'  1  0  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,39,1,0,1607880396,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+-'  1  0  ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+|4,39,1,0,1607880396,"~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py"
+
+# Historique des marques dans les fichiers (les plus récentes en premier) :
+
+> ~/.virtualenvs/envConvertVideo3/videoapp/clss_helpers.py
+	*	1607880426	0
+	"	65	34
+	^	65	10
+	.	65	34
+	+	65	34

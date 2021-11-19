@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Komodo Project File - DO NOT EDIT -->
+<project id="8d1c3b1f-2452-4daa-a8cb-5c82409e97cf" kpf_version="5" name="ConvertorProject.komodoproject">
+<preference-set idref="8d1c3b1f-2452-4daa-a8cb-5c82409e97cf" id="project" preftype="project">
+  <string id="pythonExtraPaths">/usr/local/lib/python2.7:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages/converter2</string>
+</preference-set>
+</project>
